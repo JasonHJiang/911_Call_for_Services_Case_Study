@@ -1,0 +1,512 @@
+data[,1:2]
+data$allvars = ""
+data$allvars[1:4] = as.character(data[1:4,2])
+data$allvars[-(1:4)] = as.character(data[-(1:4),1])
+data[,2] = data$allvars
+data[,1] = NULL
+data$allvars = NULL
+head(data,n=1)
+data$Patient127 = NULL # why?
+# install.packages("data.table")
+library(data.table)
+data2 = transpose(data)
+head(data2)
+names(data2) = as.character(data2[1,])
+head(data2)
+data2 = data2[-1,] ### note we can't use 'NULL' for rows (for interest: why?)
+row.names(data2) = paste0("Patient",1:nrow(data2))
+head(data2)
+str(data2)
+for(k in c(1,3,4))
+{
+data2[,k] = as.factor(data2[,k])
+}
+data2[,2] = as.numeric(data2[,2])
+for(k in 5:ncol(data2))
+{
+data2[,k] = as.numeric(data2[,k])
+}
+str(data2)
+write.csv(data2,"Case Study IBD Cleaned.csv")
+table(data2[,1])
+table(data2[,2])
+table(data2[,3])
+table(data2[,4])
+misspelled = which(data2$Ethnicity == "cacuasian")
+data2$Ethnicity[misspelled] = "caucasian"
+misspelled = which(data2$Group == "Ulcerative")
+data2$Group[misspelled] = "Ulcerative Colitis"
+## Check our work
+table(data2$Group)
+table(data2$Ethnicity)
+hist(data2[,5], n=15) ## Unimodal, no outliers..
+hist(data2[,6], n=15) ## Unimodal, no outliers..
+hist(data2[,7], n=15) ## Skewed.. some outliers.
+data_genes = data2[,-c(1:4)]
+means = apply(data_genes, 2, mean)
+medians = apply(data_genes, 2, median)
+sds = apply(data_genes, 2, sd)
+pearson.skewness = function(X)
+{
+X = X[!is.na(X)]
+mu = mean(X)
+sigma = sd(X)
+output = mean( ((X - mu) / sigma)^3)
+return(output)
+}
+skews = apply(data_genes, 2, pearson.skewness)
+hist(means)
+hist(medians)
+hist(sds)
+hist(skews)
+which(skews > 8) ## 95, 216, and 261
+skews[c(95,216,261)]
+hist(data_genes[,95])
+hist(data_genes[,216])
+hist(data_genes[,261])
+by( data_genes[,1], data2$Group, mean)
+as.numeric(by(data_genes[,1], data2$Group, mean))
+as.numeric(by(data_genes[,1], data2$Group, median))
+as.numeric(by(data_genes[,1], data2$Group, sd))
+as.numeric(by(data_genes[,1], data2$Group, pearson.skewness))
+as.numeric(by(data_genes[,1], data2$Group, mean))
+by( data_genes[,1], data2$Group, mean)
+install.packages("RPART")
+install.packages("rpart")
+library(rpart)
+library(rpart)
+?rpart
+# library(Iris)
+fit = rpart(Petal.Length ~ Petal.Width +
+Sepal.Length + Sepal.Width, data=iris)
+plot(fit, uniform=TRUE)
+text(fit, use.n=TRUE, all=TRUE, cex=1)
+install.packages("CART")
+install.packages("cart")
+# library(Iris)
+fit = rpart(Petal.Length ~ ., data=iris)
+plot(fit, uniform=TRUE)
+text(fit, use.n=TRUE, all=TRUE, cex=1)
+# library(Iris)
+fit = rpart(Petal.Length ~ Petal.Width +
+Sepal.Length + Sepal.Width, data=iris)
+plot(fit, uniform=TRUE)
+text(fit, use.n=TRUE, all=TRUE, cex=1)
+fit = rpart(Petal.Length ~ Petal.Width +
+Sepal.Length + Sepal.Width, data=iris)
+plot(fit, uniform=TRUE) # vertical distances of bars are equal
+text(fit, use.n=TRUE, all=TRUE, cex=1) # add text
+?printcp
+printcp(fit)
+fit = rpart(Petal.Length ~ Petal.Width +
+Sepal.Length + Sepal.Width, data=iris)
+plot(fit, uniform=TRUE) # vertical distances of bars are equal
+text(fit, use.n=TRUE, all=TRUE, cex=1) # add text
+# give sampel size
+printcp(fit)
+plot(fit, uniform=TRUE) # vertical distances of bars are equal
+text(fit, use.n=TRUE, all=TRUE, cex=1) # add text
+fit = rpart(Petal.Length ~ Petal.Width +
+Sepal.Length + Sepal.Width, data=iris)
+plot(fit, uniform=TRUE) # vertical distances of bars are equal
+text(fit, use.n=TRUE, all=TRUE, cex=1) # add text
+summary(fit)
+prune(fit, cp=0)
+prune(fit, cp=0.03)
+prune(fit, cp=0.25)
+prune(fit, cp=0)
+pfit<- prune(fit, cp=
+fit$cptable[which.min(fit$cptable[,"xerror"]
+),"CP"])
+fit <- rpart(Kyphosis ~ Age + Number + Start,
+method="class", data=kyphosis)
+printcp(fit) # display the results
+plotcp(fit) # visualize cross-validation results
+summary(fit) # detailed summary of splits
+plot(fit, uniform=TRUE,
+main="Classification Tree for Kyphosis")
+text(fit, use.n=TRUE, all=TRUE, cex=.8)
+plot(fit, uniform=TRUE,
+main="Classification Tree for Kyphosis")
+text(fit, use.n=TRUE, all=TRUE, cex=.8)
+table(kyphosis$Start)
+install
+install.packages("randomForest")
+library(randomForest)
+library(randomForest)
+fit <- randomForest(Kyphosis ~ Age + Number + Start,
+data=kyphosis)
+print(fit) # view results
+importance(fit) # importance of each predictor
+print(fit) # view results
+importance(fit) # importance of each predictor
+importance(fit) # importance of each predictor
+importance(fit) # importance of each predictor
+install.packages("rpart.plot")
+library(rpart.plot)
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
+require(stats)
+for (i in 1:ncol(data_genes))
+{
+shapiro.test(data_genes[,i])$p.value
+}
+shapiro.test(data_genes[,1])
+shapiro.test(data_genes[,1])[p.value]
+shapiro.test(data_genes[,1])$pvalue
+shapiro.test(data_genes[,1])$p.value
+print(shapiro.test(data_genes[,i])$p.value)
+require(stats)
+for (i in 1:ncol(data_genes))
+{
+print(shapiro.test(data_genes[,i])$p.value)
+}
+require(stats)
+for (i in 1:ncol(data_genes))
+{
+print(shapiro.test(data_genes[,i])$p.value)
+if (shapiro.test(data_genes[,i])$p.value > 0.05)
+{
+print(paste0("warning ",i))
+}
+}
+require(nnet)
+library(nnet)
+?multinom
+corrplot(data_genes[,1:50],type="upper")
+require(gvis)
+corrplot(data_genes[,1:50],type="upper")
+require(corrplot)
+corrplot(data_genes[,1:50],type="upper")
+library(ggcorrplot)
+corrplot(data_genes[,1:50],type="upper")
+library(corrplot)
+install.packages("corrplot")
+corrplot(data_genes[,1:50],type="upper")
+library(corrplot)
+corrplot(data_genes[,1:50],type="upper")
+corrplot(data_genes,type="upper")
+corrplot(cor(data_genes[,1:50]),type="upper")
+corrplot(cor(data_genes[,50:100]),type="upper")
+corrplot(cor(data_genes[,100:ncol(data_genes)]),type="upper")
+corrplot(cor(data_genes[,1:50]),type="upper")
+?glmnet
+??glmnet
+install.packages("glmnet")
+library(glmnet)
+?glmnet
+fit = glmnet(data2,data2$Group , family = "multinomial", type.multinomial = "grouped")
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,fig.height=3,fig.width=5)
+mu1<-1; mu2<-(-1); sigma<-1; pi1<-0.1;pi2<-0.9
+x <-seq(from=-4,to=4,length=100)
+f1 <- dnorm(x,mean=mu1,sd=sigma)
+f2 <- dnorm(x,mean=mu2,sd=sigma)
+delta <- function(x,mu,sigma,pi) {
+x*mu/sigma^2 - mu^2/(2*sigma^2) + log(pi)
+}
+delta1 <- delta(x,mu1,sigma,pi1)
+delta2 <- delta(x,mu2,sigma,pi2)
+dd <- data.frame(x=x,f1=f1,f2=f2,delta1=delta1,delta2=delta2)
+library(tidyverse)
+ggplot(dd,aes(x=x))+
+geom_line(aes(y=f1*pi1),color="cyan")+
+geom_line(aes(y=f2*pi2),color="red") +
+labs(y=expression(f[k](x)*pi[k]))
+ggplot(dd,aes(x=x))+
+geom_line(aes(y=delta1),color="cyan")+
+geom_line(aes(y=delta2),color="red") +
+labs(y=expression(delta[k](x)))
+(mu1 + mu2)/2 + sigma^2*log(pi2/pi1)/(mu1-mu2)
+library(ISLR)
+data(Default)
+ggplot(Default,aes(x=balance,color=default)) +
+geom_density(aes(y=..count..))
+n <- 10000; K <- 2
+pi1 <- with(Default,mean(default=="Yes")); pi2 <- 1-pi1
+defBalance <- with(Default,balance[default=="Yes"])
+nodefBalance <- with(Default,balance[default=="No"])
+mu1 <- mean(defBalance)
+mu2 <- mean(nodefBalance)
+sigma <- sqrt((sum((defBalance-mu1)^2) + sum((nodefBalance-mu2)^2))/(n-K))
+#x <- seq(from=min(Default$balance),to=max(Default$balance),length=100)
+with(Default,range(balance))
+x <- seq(from=0,to=3000,length=100)
+f1 <- dnorm(x,mean=mu1,sd=sigma)
+f2 <- dnorm(x,mean=mu2,sd=sigma)
+delta1 <- delta(x,mu1,sigma,pi1)
+delta2 <- delta(x,mu2,sigma,pi2)
+dd <- data.frame(x=x,f1=f1,f2=f2,delta1=delta1,delta2=delta2)
+?with
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
+# Lasso: Optimal tuning parameter, how to clean them, result.
+require(nnet)
+# install.packages("corrplot")
+library(corrplot)
+library(glmnet)
+library(nnet)
+# corrplot(cor(data_genes[,1:50]),type="upper")
+# corrplot(cor(data_genes[,50:100]),type="upper")
+# corrplot(cor(data_genes[,100:ncol(data_genes)]),type="upper")
+data2$Group <- factor(data2$Group)
+data2$Ethnicity <- factor(data2$Ethnicity)
+# fit <- multinom(Group ~.,data2)
+split <- 50
+train <- data.matrix(data2[1:split,2:ncol(data2)])
+train_response <- data2$Group[1:split]
+test <- data.matrix(data2[(split+1):nrow(data2),2:ncol(data2)])
+real_response <- data2[(split+1):nrow(data2),1]
+cvfit <- cv.glmnet(train, train_response, family="multinomial", type.multinomial = "grouped", parallel = TRUE)
+plot(cvfit)
+pred_response <- predict(cvfit, newx = test, s = "lambda.min", type = "class")
+result <- data.frame(pred_response,real_response)
+View(result)
+### cosine similarity check
+# install.packages("lsa")
+library(lsa)
+cosine(data.matrix(result))
+?require
+install.packages("install.load")
+library(install.load)
+install.load(nne)
+install.load(nnet)
+install_load(nnet)
+install_load("nnet")
+install_load("Snowfall")
+install_load("snowfall")
+posteriorYesLogistic <- fitted(cvfit)
+ROClogist <- tidy(roc(posteriorYesLogistic,trueYes))
+install_load("AUC")
+install_load("broom")
+posteriorYesLogistic <- fitted(cvfit)
+ROClogist <- tidy(roc(posteriorYesLogistic,trueYes))
+library(broom)
+posteriorYesLogistic <- fitted(cvfit)
+ROClogist <- tidy(roc(posteriorYesLogistic,trueYes))
+ROCres <- roc(pred_response,real_response)
+tidyROCres <- tidy(ROCres)
+posteriorYesLogistic <- fitted(cvfit)
+ROClogist <- tidy(roc(posteriorYesLogistic,real_response))
+ROClogist <- tidy(roc(posteriorYesLogistic))
+ggplot(tidyROCres,aes(x=fpr,y=tpr)) + geom_point(pch=".")
+ggplot(tidyROCres,aes(x=fpr,y=tpr)) + geom_point(pch=".")
+ROCres <- roc(pred_response,real_response)
+tidyROCres <- tidy(ROCres)
+posteriorYesLogistic <- fitted(cvfit)
+ggplot(tidyROCres,aes(x=fpr,y=tpr)) + geom_point(pch=".")
+ROCres <- roc(pred_response,real_response)
+tidyROCres <- tidy(ROCres)
+posteriorYesLogistic <- fitted(cvfit)
+ggplot(tidyROCres,aes(x=fpr,y=tpr)) + geom_point(pch=".")
+ROCres
+ROClogist <- tidy(roc(posteriorYesLogistic,real_response))
+posteriorYesLogistic
+fitted(cvfit)
+ROClogist <- tidy(roc(pred_response,real_response))
+ggplot(ROClogist,aes(x=fpr,y=tpr)) + geom_point(pch=".")
+knitr::opts_chunk$set(echo = TRUE)
+data(gapminder)
+data(Gapminder)
+??gapminder
+install_load("gapminder")
+library(gapminder)
+data("gapminder")
+dTA
+data
+gapdata <- gapminder
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %in%
+filter(year==1952) %>%
+select(-year,-gdpPercap,-pop)
+library(gapminder)
+library(tidyverse)
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %in%
+filter(year==1952) %>%
+select(-year,-gdpPercap,-pop)
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %in%
+filter(years==1952) %>%
+select(-year,-gdpPercap,-pop)
+names(gapminder)
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %in%
+filter(year<=1952) %>%
+select(-year,-gdpPercap,-pop)
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe"))
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %in%
+filter(gapminder$year<=1952) %>%
+select(-year,-gdpPercap,-pop)
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %in%
+filter(gapminder$year==1952) %>%
+select(-year,-gdpPercap,-pop)
+gapminder$year
+type(gapminder$year)
+class(gapminder$year)
+data3 <- gapminder %>%
+mutate(lgdpPercap = log10(gdpPercap),
+lpop = log10(pop)) %>%
+filter(continent %in% c("Asia","Africa", "Europe")) %>%
+filter(year==1952) %>%
+select(-year,-gdpPercap,-pop)
+name(gapminder)
+names(gapminder)
+fit.full <- lm(lifeExp ~., data=data3)
+fit.full <- lm(lifeExp ~ continent * (lgdpPercap + lpop), data=data3)
+summary(fit.full)
+fit.red <- lm(lifeExp ~ lgdpPercap * continent, data=data3)
+anova(fit.full, fit.red)
+anova(fit.full, fit.red)$p.value
+anova(fit.full, fit.red)$pvalue
+anova(fit.full, fit.red)$p_value
+anova(fit.full, fit.red)
+summary(fit.red)
+install_load("pscl")
+pR2(cvfit)
+cvfit <- glmnet(train, train_response, family="multinomial", type.multinomial = "grouped")
+plot(cvfit)
+pred_response <- predict(cvfit, newx = test, s = "lambda.min", type = "class")
+result <- data.frame(pred_response,real_response)
+pred_response <- predict(cvfit, newx = test, s = "lambda.min", type = "class")
+cvfit <- cv.glmnet(train, train_response, family="multinomial", type.multinomial = "grouped", parallel = TRUE)
+plot(cvfit)
+x <- "apple"
+x
+letters[1:26]
+toupper(letters[1:26])
+y = c("a","b",NA,32)
+as.numeric(y)
+c(x, "banana")
+sample(x)
+sample(x)
+sample(x)
+letters
+sample(letters[1:10], 3)
+x = c("apples", "oranges", "pears")
+z = c(12,45,"cows go moo")
+z
+x + 3
+c(x, "banana")
+sample(x)
+a <- "hey \n hey"
+a <- "hey \n hey"
+a <- c("hey \n hey")
+a
+a <- c('hey \n hey')
+a
+'hey \n hey'
+regexpr("hey n")
+regexpr("hey \n")
+str_detect("apples", "app")
+install_load("stringr")
+require(install.load)
+install_load("stringr")
+str_detect("apples", "app")
+str_detect("orange","app")
+str_detect("apples","APP")
+str_detect("APPLES",app")
+str_detect("APPLES","app")
+str_detect("APPLES","app")
+str_detect(x,"hey")
+x <- "hey look at \n what i can do"
+str_detect(x,"hey")
+str)detect(x, "heyyyyy")
+str_detect(x, "heyyyyy")
+str_detect("hey look", "hey")
+y
+str)detect(y,"a")
+str_detect(y,"a")
+str_detect(y,c("a","3"))
+str_detect(y,c("a","3","a","a"))
+str_detect(z,"[0-9]{3} - [0-9]{4}")
+str_detect(z,"[0-9](3) - [0-9](4)")
+z=c("123-3456","555-5555")
+str_detect(z,"[0-9]{3} - [0-9]{4}")
+str_detect(z,"[0-9](3) - [0-9](4)") # detect phone number
+z=c("123-3456","555-5555")
+str_detect(z,"[0-9](3) - [0-9](4)") # detect phone number
+str_detect(c("dog","dig","dAg","dg","dawg"),"d.g")
+z=c("123-3456","555-5555")
+str_detect(z,"{0-9}{3} - {0-9}{4}") # detect phone number
+str_detect(c("dog","dig","dAg","dg","dawg"),"d*.g") # start with d end with g, don't care what in between
+str_count(c("dog","d g","d.g","d.ggy paws"), "d\\.g")
+str_detect(z,"[0-9]{3}-[0-9]{4}") # detect phone number
+str_detect("caterpillar", "cat|dog")
+str_detect("dogma","cat|dog")
+str_detect("caterpillar", "cat&dog")
+str_extract("my number is 555-1234","[0-9]{3}-[0-9]{4}")
+str_detect("catdogma","cat&dog")
+str_detect("catdogma","cat&&dog")
+str_detect("doooogma","do+g") # at least one 'o' before g
+str_detect("dgma","do+g")
+str_detect("dogogogma", "d(og)+ma")
+str_detect("doooogma","do*g")
+str_detect("doofoogma","do*g")
+str_detect("hyperprior","hyper *prior") # any number of spaces between hyper and prior is okay
+str_detect("caterpillar","^cat")
+str_detect("caterpillar","^ter")
+str_detect("caterpillar","^pillar")
+str_detect("caterpillar","ter")
+str_detect("caterpillar","pillar")
+str_detect("caterpiller","cat$") # begain and end with cat
+str_detect("caterpiller","pillar$")
+str_detect("caterpiller","^cat$")
+str_detect("caterpiller","^cat|pillar$")
+str_detect("caterpillercat","cat$") # begain and end with cat
+str_detect(c("tire","tier","tyre"),  "t(i|y)re")
+str_detect(c("tire","tier","tyre"),  "t[iy]re")
+adist("exactly the same","exactly the same") # edit distance 0
+adist("exactly the same","totally different") # edit distance 14
+adist("exactly the same","exactly the sames")
+adist("triangle inequality?","what's that?")
+load("C:/Users/lenovo/Desktop/12th Semester/STAT440/.RData")
+dim(dat)
+knitr::opts_chunk$set(echo = FALSE)
+Calls_for_Service_Seattle <- read.csv("911_Calls_for_Service_Seattle.csv")
+dim(Calls_for_Service_Seattle)
+colnames(Calls_for_Service_Seattle)
+dat <- Calls_for_Service_Seattle
+Calls_for_Service_Seattle <- NULL
+## Possibility 1: Take a sample of 5% of the rows
+fraction = 0.05
+set.seed(12345) ## Change this to your own number
+sample_rows = sample(1:nrow(dat), floor(nrow(dat) * fraction))
+dat_sample = dat[sample_rows,]
+write.csv(dat_sample,"Seattle_Fraction_05.csv")
+dat = dat_sample # overwrite the old dat
+dat_sample = NULL # To clear RAM
+gc() # garbage collection to further clear RAM
+dim(dat)
+colnames(dat)
+str(dat)
+require(plyr)
+des_count <- count(dat$Initial.Type.Description)
+group_count <- count(dat$Initial.Type.Group)
+subgroup_count <- count(dat$Initial.Type.Subgroup)
+des_count[des_count$freq <= 10,]
+group_count[group_count$freq <= 10,]
+subgroup_count[subgroup_count$freq <= 10,]
+setwd("C:/Users/lenovo/Desktop/12th Semester/STAT440/Case study two")
+knitr::opts_chunk$set(echo = FALSE)
+des_count[des_count$freq <= 100,]
+sort(des_count[des_count$freq <= 100,])
+sorted(des_count[des_count$freq <= 100,])
+group_count[group_count$freq <= 100,]
+subgroup_count[subgroup_count$freq <= 100,]
+head(dat)
+str(dat)
