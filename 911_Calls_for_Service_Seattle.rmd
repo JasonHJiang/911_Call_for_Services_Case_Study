@@ -11,20 +11,20 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Import the data
 ```{r}
-Calls_for_Service_Seattle <- read.csv("911_Calls_for_Service_Seattle.csv")
+Calls_for_Service_Seattle <- read.csv("911_Calls_for_Service_Seattle.csv", stringsAsFactors = FALSE)
 dim(Calls_for_Service_Seattle)
 colnames(Calls_for_Service_Seattle)
 dat <- Calls_for_Service_Seattle
-Calls_for_Service_Seattle <- NULL
+# Calls_for_Service_Seattle <- NULL
 ## Possibility 1: Take a sample of 5% of the rows
-fraction = 0.05
-set.seed(12345) ## Change this to your own number
-sample_rows = sample(1:nrow(dat), floor(nrow(dat) * fraction))
-dat_sample = dat[sample_rows,]
-write.csv(dat_sample,"Seattle_Fraction_05.csv")
-dat = dat_sample # overwrite the old dat
-dat_sample = NULL # To clear RAM
-gc() # garbage collection to further clear RAM
+# fraction = 0.05
+# set.seed(12345) ## Change this to your own number
+# sample_rows = sample(1:nrow(dat), floor(nrow(dat) * fraction))
+# dat_sample = dat[sample_rows,]
+# write.csv(dat_sample,"Seattle_Fraction_05.csv")
+# dat = dat_sample # overwrite the old dat
+# dat_sample = NULL # To clear RAM
+# gc() # garbage collection to further clear RAM
 ```
 Take a look
 ```{r}
@@ -37,12 +37,32 @@ require(plyr)
 des_count <- count(dat$Initial.Type.Description)
 group_count <- count(dat$Initial.Type.Group)
 subgroup_count <- count(dat$Initial.Type.Subgroup)
-des_count[des_count$freq <= 100,]
-group_count[group_count$freq <= 100,]
-subgroup_count[subgroup_count$freq <= 100,]
+des_count[des_count$freq <= 5,]
+group_count[group_count$freq <= 5,]
+subgroup_count[subgroup_count$freq <= 5,]
 head(dat)
-
 ```
+Examine the data
+```{r}
+library(lubridate)
+str(dat)
+dat$CAD.CDW.ID <- as.factor(dat$CAD.CDW.ID)
+dat$CAD.Event.Number <- as.factor(dat$CAD.Event.Number)
+dat$General.Offense.Number <- as.factor(dat$General.Offense.Number)
+dat$Event.Clearance.Date <- as.character(mdy_hms(dat$Event.Clearance.Date, tz=''))
+
+dat$At.Scene.Time <- as.Date(dat$At.Scene.Time)
+for (i in 1:ncol(dat))
+{
+  print(sprintf("%s: %s",colnames(dat)[i],nrow(count(dat[,i]))))
+}
+count(dat$District.Sector) # NULL:22
+count(dat$Zone.Beat)
+count(dat$Initial.Type.Description)
+count(dat$Event.Clearance.Group) # NULL:51
+count(dat$Initial.Type.Subgroup)
+```
+
 Link with Google maps API
 ```{r}
 library(RCurl)
