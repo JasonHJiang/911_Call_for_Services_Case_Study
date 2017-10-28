@@ -11,8 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(xlsx)
-setwd("C:/Users/Lenovo/Desktop/STAT 440/caseStudy 2")
-dat <- read.csv("Seattle_Police_Department_911_Incident_Response.csv", header = TRUE, sep = ",")
+dat <- read.csv("911_Calls_for_Service_Seattle.csv", header = TRUE, sep = ",")
 fraction <- 0.05
 set.seed(1234)
 sample_rows <- sample(1:nrow(dat), floor(nrow(dat)*fraction))
@@ -47,17 +46,95 @@ for(i in 1:8){
 
 library(stringr)
 dsm[,6] <- as.character(dsm[,6])
-date_time <- strsplit(dsm[,6], " ")
-n <- length(date_time)
-for (i in 1:n){
-  MM.DD.YY[i] <- date_time[[i]][1]
-  spc_time[i] <- date_time[[i]][2]
-  AM.PM[i] <- date_time[[i]][3]
-}
-MM.DD.YY <- as.data.frame(MM.DD.YY, stringsAsFactors = FALSE)
-spc_time <- as.data.frame(spc_time, stringsAsFactors = F)
-AM.PM <- as.data.frame(AM.PM, stringsAsFactors = F)
-
-
+date_time <- as.data.frame(str_split_fixed(dsm[,6], " ",3),stringsAsFactors = FALSE)
+MM.DD.YY <- as.data.frame(date_time[,1], stringsAsFactors = FALSE)
+spc_time <- as.data.frame(date_time[,2], stringsAsFactors = F)
+AM.PM <- as.data.frame(date_time[,3], stringsAsFactors = F)
+names(MM.DD.YY) <- c("MM.DD.YY");names(spc_time) <- c("spc_time");names(AM.PM) <- c("AM.PM");
 ```
 
+Explainatory Analysis: histograms of date
+```{r}
+split_mdy <- as.data.frame((str_split_fixed(MM.DD.YY$MM.DD.YY, "/", 3)), stringsAsFactors = FALSE)
+mm <- as.data.frame(as.numeric(unlist(split_mdy[1])))
+dd <- as.data.frame(as.numeric(unlist(split_mdy[2])))
+yy <- as.data.frame(as.numeric(unlist(split_mdy[3])))
+hist(mm[,1])
+hist(dd[,1])
+hist(yy[,1])
+# how about a week?
+MM.DD.YY$MM.DD.YY <- strptime(MM.DD.YY$MM.DD.YY,format="%m/%d/%Y")
+barplot(prop.table(table(weekdays(MM.DD.YY$MM.DD.YY))))
+```
+Explainatory Analysis: histogram of times
+```{r}
+require(data.table)
+timecmb <- cbind(spc_time,AM.PM)
+timecmb$cmd <- paste(timecmb$spc_time, timecmb$AM.PM, sep=" ")
+timecmb$spc_time <- NULL
+timecmb$AM.PM <- NULL
+
+timecmb$cmd <- strptime(timecmb[,1], format="%I:%M:%S %p")
+timecmb <- as.data.frame(lapply(timecmb,as.character), stringsAsFactors = FALSE)
+func <- function(x)
+{
+  x <- str_split_fixed(as.character(x)," ",2)[2]
+  return(x)
+}
+timecmb <- transpose(as.data.frame(lapply(timecmb$cmd, func), stringsAsFactors = FALSE))
+
+split_hms <- as.data.frame((str_split_fixed(timecmb$V1, ":", 3)), stringsAsFactors = FALSE)
+hh <- as.data.frame(as.numeric(unlist(split_hms[1])))
+mminute <- as.data.frame(as.numeric(unlist(split_hms[2])))
+ss <- as.data.frame(as.numeric(unlist(split_hms[3])))
+hist(hh[,1])
+hist(mminute[,1])
+hist(ss[,1])
+```
+Explainatory Analysis: analyze the whole year
+```{r}
+require(plyr)
+sum_date <- cbind(mm,dd,yy,timecmb)
+names(sum_date) <- c("mm","dd","yy","timecmb")
+sum_date$yy <- 2017
+sum_date$mmddyy <- paste(sum_date$mm,sum_date$dd,sum_date$yy,sep='/')
+sum_date$sum_date <- paste(sum_date$mmddyy,sum_date$timecmb,sep=" ")
+sum_date <- as.data.frame(lapply(sum_date, as.factor))
+sum_date <- as.data.frame(sum_date$sum_date, stringsAsFactors = FALSE)
+sum_date <- na.omit(sum_date)
+names(sum_date) <- "sum_date1"
+sum_date_count_table <- count(sum_date$sum_date1)
+three_times_incidents <-sum_date_count_table[which(sum_date_count_table$freq > 2),]
+two_times_incidents <- sum_date_count_table[which(sum_date_count_table$freq == 2),]
+```
+Clearning: count() is a better version of table()
+```{r}
+require(plyr)
+des_count <- count(ds$Initial.Type.Description)
+group_count <- count(ds$Initial.Type.Group)
+subgroup_count <- count(ds$Initial.Type.Subgroup)
+des_count[des_count$freq <= 5,]
+group_count[group_count$freq <= 5,]
+subgroup_count[subgroup_count$freq <= 5,]
+head(ds)
+```
+Examine the data
+```{r}
+library(lubridate)
+str(ds)
+ds$CAD.CDW.ID <- as.factor(ds$CAD.CDW.ID)
+ds$CAD.Event.Number <- as.factor(ds$CAD.Event.Number)
+ds$General.Offense.Number <- as.factor(ds$General.Offense.Number)
+ds$Event.Clearance.Date <- as.character(mdy_hms(ds$Event.Clearance.Date, tz=''))
+
+ds$At.Scene.Time <- as.Date(ds$At.Scene.Time)
+for (i in 1:ncol(ds))
+{
+  print(sprintf("%s: %s",colnames(ds)[i],nrow(count(ds[,i]))))
+}
+count(ds$District.Sector) # NULL:22
+count(ds$Zone.Beat)
+count(ds$Initial.Type.Description)
+count(ds$Event.Clearance.Group) # NULL:51
+count(ds$Initial.Type.Subgroup)
+```
