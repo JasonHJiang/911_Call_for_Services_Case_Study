@@ -118,6 +118,28 @@ group_count[group_count$freq <= 5,]
 subgroup_count[subgroup_count$freq <= 5,]
 head(ds)
 ```
+-------------------------------------------------------------------------
+Oct. 29:
+Clearning: count() is a better version of table()
+1.Event.Clearance.Code is related to the Event.Clearance.Desscription
+2. rare data cleaning
+```{r}
+as.character(dsm$Event.Clearance.Description)
+require(plyr)
+des_count <- count(dsm$Event.Clearance.Description)
+group_count <- count(dsm$Event.Clearance.Group)
+
+rare_des <- des_count[des_count$freq <= 5,]
+rare_des_x <- as.vector(rare_des$x)
+
+dsm <- subset(dsm,  ! dsm$Event.Clearance.Description %in% rare_des_x)
+
+rare_group <- group_count[group_count$freq <= 5,]
+rare_group_x <- as.vector(rare_group$x)
+dsm <- subset(dsm, ! dsm$Event.Clearance.Group %in% rare_group_x)
+head(dsm)
+```
+----------------------------------------------------------------------------
 Examine the data
 ```{r}
 library(lubridate)
