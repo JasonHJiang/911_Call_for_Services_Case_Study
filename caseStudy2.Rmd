@@ -140,6 +140,46 @@ dsm <- subset(dsm, ! dsm$Event.Clearance.Group %in% rare_group_x)
 head(dsm)
 ```
 ----------------------------------------------------------------------------
+
+1. switch MM.DD.YY to weekdays - response
+2. switch specific time to 4-level factor (morning, noon, evening, night
+```{r}
+weekday <- weekdays(as.Date(dsm$MM.DD.YY, "%m/%d/%Y"))
+Y <- as.factor(weekday)
+ds_full <- cbind(Y, dsm)
+ds_full$Event.Clearance.Group <- as.factor(ds_full$Event.Clearance.Description)
+
+day <- as.data.frame(str_split_fixed(ds_full$spc_time, ":", 3), stringAsFactor=F)
+hr <- day[,1]
+mins <-day[,2]
+sec <- day[,3]
+sum_day <- NA
+ds_full <- cbind(ds_full, hr, mins, sec, sum_day)
+
+
+for (i in 1:nrow(ds_full)){
+
+ if (ds_full$AM.PM[i] =="AM"){
+    if (ds_full$hr[i] %in% c("00","01","02","03","04","05")){
+      ds_full$sum_day[i] <- "night"
+    }
+    else{
+      ds_full$sum_day[i] <-"morning"
+    }
+  }
+  if (ds_full$AM.PM[i] == "PM"){
+    if (ds_full$hr[i] %in% c("00","01","02","03","04","05")){
+     ds_full$sum_day[i] <-"noon"
+    }
+    else{
+      ds_full$sum_day[i] <-"evening"
+    }
+  }
+}
+ds_full$sum_day <- as.factor(ds_full$sum_day)
+write.csv(ds_full, "Seattle_0.05_analysis.csv")
+```
+
 Examine the data
 ```{r}
 library(lubridate)
