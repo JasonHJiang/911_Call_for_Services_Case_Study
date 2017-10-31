@@ -11,7 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(xlsx)
-dat <- read.csv("911_Calls_for_Service_Seattle.csv", header = TRUE, sep = ",")
+setwd("C:/Users/Lenovo/Desktop/STAT 440/caseStudy 2")
+dat <- read.csv("Seattle_Police_Department_911_Incident_Response.csv", header = TRUE, sep = ",")
+names(dat)[1] <- "CAD.CDW.ID"
 fraction <- 0.05
 set.seed(1234)
 sample_rows <- sample(1:nrow(dat), floor(nrow(dat)*fraction))
@@ -19,14 +21,22 @@ sample_rows <- sample(1:nrow(dat), floor(nrow(dat)*fraction))
 dat5 <- dat[sample_rows,]
 write.csv(dat5, "Seattle_0.05.csv")
 
+
+dat = dat5 # overwrite the old dat
+dat5 = NULL # To clear RAM
+gc()
 ```
 
 GOAL:Can you build a method to suggest what times of day, week, or year that a greater police presence would be useful
 ```{r}
+Sys.setenv("LANGUAGE"="En")
+Sys.setlocale("LC_ALL", "English")
 ds <- read.csv("Seattle_0.05.csv", header = TRUE, sep=",")
+ds <- ds[,-1]
 head(ds)
 names(ds)
 ```
+
 
 ```{r}
 library(dplyr)
@@ -34,6 +44,7 @@ dsm <- ds[c(1,2,4,5,7,8,13,14)]
 #"CAD.CDW.ID",  "CAD.Event.Number" ,"Event.Clearance.Code" 
 #"Event.Clearance.Description" , "Event.Clearance.Group" ,
 #"Event.Clearance.Date" , "Longitude" , "Latitude"
+dsm <- subset(dsm, dsm$Event.Clearance.Group == "AUTO THEFTS")
 head(dsm)
 for(i in 1:8){
   if(sum(is.na(dsm[,i]))==0){
@@ -48,9 +59,15 @@ library(stringr)
 dsm[,6] <- as.character(dsm[,6])
 date_time <- as.data.frame(str_split_fixed(dsm[,6], " ",3),stringsAsFactors = FALSE)
 MM.DD.YY <- as.data.frame(date_time[,1], stringsAsFactors = FALSE)
+
 spc_time <- as.data.frame(date_time[,2], stringsAsFactors = F)
-AM.PM <- as.data.frame(date_time[,3], stringsAsFactors = F)
-names(MM.DD.YY) <- c("MM.DD.YY");names(spc_time) <- c("spc_time");names(AM.PM) <- c("AM.PM");
+AM.PM <- as.factor(date_time[,3])
+names(MM.DD.YY) <- c("MM.DD.YY")
+names(spc_time) <- c("spc_time")
+names(AM.PM) <- c("AM.PM")
+
+dsm <- cbind(dsm,MM.DD.YY, spc_time, AM.PM)
+
 ```
 
 Explainatory Analysis: histograms of date
@@ -66,7 +83,8 @@ hist(yy[,1])
 MM.DD.YY$MM.DD.YY <- strptime(MM.DD.YY$MM.DD.YY,format="%m/%d/%Y")
 barplot(prop.table(table(weekdays(MM.DD.YY$MM.DD.YY))))
 ```
-Explainatory Analysis: histogram of times
+
+Explainatory Analysis: histogram of times /// error in transpose function
 ```{r}
 require(data.table)
 timecmb <- cbind(spc_time,AM.PM)
@@ -91,6 +109,7 @@ hist(hh[,1])
 hist(mminute[,1])
 hist(ss[,1])
 ```
+
 Explainatory Analysis: analyze the whole year
 ```{r}
 require(plyr)
@@ -107,24 +126,12 @@ sum_date_count_table <- count(sum_date$sum_date1)
 three_times_incidents <-sum_date_count_table[which(sum_date_count_table$freq > 2),]
 two_times_incidents <- sum_date_count_table[which(sum_date_count_table$freq == 2),]
 ```
-Clearning: count() is a better version of table()
-```{r}
-require(plyr)
-des_count <- count(ds$Initial.Type.Description)
-group_count <- count(ds$Initial.Type.Group)
-subgroup_count <- count(ds$Initial.Type.Subgroup)
-des_count[des_count$freq <= 5,]
-group_count[group_count$freq <= 5,]
-subgroup_count[subgroup_count$freq <= 5,]
-head(ds)
-```
--------------------------------------------------------------------------
-Oct. 29:
+
 Clearning: count() is a better version of table()
 1.Event.Clearance.Code is related to the Event.Clearance.Desscription
 2. rare data cleaning
 ```{r}
-as.character(dsm$Event.Clearance.Description)
+dsm$Event.Clearance.Description <- as.character(dsm$Event.Clearance.Description)
 require(plyr)
 des_count <- count(dsm$Event.Clearance.Description)
 group_count <- count(dsm$Event.Clearance.Group)
@@ -137,16 +144,23 @@ dsm <- subset(dsm,  ! dsm$Event.Clearance.Description %in% rare_des_x)
 rare_group <- group_count[group_count$freq <= 5,]
 rare_group_x <- as.vector(rare_group$x)
 dsm <- subset(dsm, ! dsm$Event.Clearance.Group %in% rare_group_x)
+
+
 head(dsm)
 ```
-----------------------------------------------------------------------------
+
 
 1. switch MM.DD.YY to weekdays - response
-2. switch specific time to 4-level factor (morning, noon, evening, night
+2. set AM.PM as factor variables
+3. some MM.DD.YY not in standard form (i.e, cannot change to date)
 ```{r}
+lct <- Sys.getlocale("LC_TIME")
+Sys.setlocale("LC_TIME", "C")
+Sys.setlocale("LC_TIME", lct)
 weekday <- weekdays(as.Date(dsm$MM.DD.YY, "%m/%d/%Y"))
-Y <- as.factor(weekday)
-ds_full <- cbind(Y, dsm)
+weekday <- as.factor(weekday)
+ds_full <- cbind(weekday, dsm)
+ds_full <- na.omit(ds_full)
 ds_full$Event.Clearance.Group <- as.factor(ds_full$Event.Clearance.Description)
 
 day <- as.data.frame(str_split_fixed(ds_full$spc_time, ":", 3), stringAsFactor=F)
@@ -154,7 +168,7 @@ hr <- day[,1]
 mins <-day[,2]
 sec <- day[,3]
 sum_day <- NA
-ds_full <- cbind(ds_full, hr, mins, sec, sum_day)
+ds_full <- cbind(sum_day, ds_full, hr, mins, sec)
 
 
 for (i in 1:nrow(ds_full)){
@@ -177,8 +191,67 @@ for (i in 1:nrow(ds_full)){
   }
 }
 ds_full$sum_day <- as.factor(ds_full$sum_day)
+ds_full$Event.Clearance.Description <- as.factor(ds_full$Event.Clearance.Description)
+names(ds_full)
+ds_full <- subset(ds_full, select = -c(CAD.CDW.ID, CAD.Event.Number,Event.Clearance.Date,Event.Clearance.Group, Event.Clearance.Code, MM.DD.YY, spc_time, hr, mins, sec))
 write.csv(ds_full, "Seattle_0.05_analysis.csv")
 ```
+
+Regression model
+LASSO
+```{r}
+library(glmnet)
+library(nnet)
+set.seed(1234)
+train <- ds_full[1:round(0.85*nrow(ds_full)), ]
+test <- ds_full[round(0.85*nrow(ds_full)+1):nrow(ds_full), -1]
+y_real <- as.vector(ds_full[round(0.85*nrow(ds_full)+1):nrow(ds_full), 1])
+
+x_lasso <- data.matrix(train[,-1])
+y_lasso <- train[,1]
+fit_lasso <- cv.glmnet(x_lasso, y_lasso, family="multinomial", type.measure = "class")
+fit_lasso
+
+fit_lasso$lambda.min
+fit_lasso$lambda.1se
+plot(fit_lasso)
+
+
+coef(fit_lasso, s="lambda.min")
+coef(fit_lasso, s="lambda.1se")
+
+newX <- data.matrix(test)
+
+pred_lasso_min <- predict(fit_lasso, newx=newX, type = "class", s="lambda.min")
+result_lasso_min <- mapply(grepl, pred_lasso_min, y_real)
+accRate_lasso_min <- sum(result_lasso_min)/length(pred_lasso_min)
+accRate_lasso_min
+```
+
+logit
+```{r}
+fit_log <- multinom(sum_day~., data = train)
+pred_log <- predict(fit_log, newdata = test, "class")
+compare_log <- cbind(y_real, as.numeric(pred_log))
+colnames(compare_log) <- c("real value", "predict value")
+compare_log
+
+```
+
+
+regression tree
+```{r}
+library(boot)
+library(rpart)
+fit_rtree <- rpart(sum_day~.,data=train, method="class")
+plot(fit_rtree, uniform = T)
+text(fit_rtree, use.n = T, all = T, cex=0.5)
+```
+
+
+
+
+
 
 Examine the data
 ```{r}
@@ -200,3 +273,4 @@ count(ds$Initial.Type.Description)
 count(ds$Event.Clearance.Group) # NULL:51
 count(ds$Initial.Type.Subgroup)
 ```
+
