@@ -1,113 +1,89 @@
-MIR Codes Desc,MIR Codes,info
-"Alarms, False",,NA
-"Alarms, False",200,"Commercial (Banks, ATM, Schools, Business)"
-"Alarms, False",201,Residential Burglary
-"Alarms, False",202,"Commercial Robbery (Bank, Panic, Duress)"
-"Alarms, False",203,Residential Panic or Duress
-"Alarms, False",204,Vehicle Alarms
-"Alarms, False",205,"Alarm-Other (VARDA, PDT, Fire, Local, Metro Etc.)"
-"Arson, Bombs, Explosion",,NA
-"Arson, Bombs, Explosion",90,"Bombs, Explosion, Large Fireworks"
-"Arson, Bombs, Explosion",91,Arson
-"Arson, Bombs, Explosion",92,Reckless Burning
-Assaults,,NA
-Assaults,40,"Assaults, Other"
-Assaults,41,"Harassment, Threats"
-Assaults,42,"By Telephone, Writing"
-Assaults,43,Firearm Involved
-Assaults,49,Gang Related
-Automobiles,,NA
-Automobiles,71,Auto Theft
-Automobiles,72,Auto Theft & Recovery
-Automobiles,73,Recovery (Theft)
-Automobiles,74,License Plate Theft or Loss
-Burglary,,NA
-Burglary,50,"Residential, Unoccupied"
-Burglary,51,"Residential, Occupied"
-Burglary,52,"Nonresidential/Commercial (Includes Schools, Churches, Public Bldgs.)"
-Burglary,53,"Unoccupied Structure On Residential Property (Garage, Storage Area, Etc.)"
-Disturbance,,NA
-Disturbance,242,Fight
-Disturbance,243,Juvenile
-Disturbance,244,Noise
-Disturbance,245,Other
-Disturbance,246,Residential Noise
-Disturbance,249,Gang Related
-Domestic Disturbance/Violence (DVPA Related),,NA
-Domestic Disturbance/Violence (DVPA Related),80,DV Threats by Phone or Writing
-Domestic Disturbance/Violence (DVPA Related),81,"DV Arguments, Dist. (No Arrest)"
-Domestic Disturbance/Violence (DVPA Related),82,DV (Arrest Discretionary)
-Domestic Disturbance/Violence (DVPA Related),83,DV /Assault (Arrest Mandatory)
-Domestic Disturbance/Violence (DVPA Related),84,DV Standby to Assure Peace
-Domestic Disturbance/Violence (DVPA Related),85,Service of Court Order
-Domestic Disturbance/Violence (DVPA Related),86,Assist Victim by Court Order
-Domestic Disturbance/Violence (DVPA Related),87,Enforce Court Order (Arrest Mand.)
-Drive by Shooting (No Injuries),,NA
-Drive by Shooting (No Injuries),179,Drive by Shooting (No Injuries)
-Hazards,,NA
-Hazards,350,Hazards
-Homicide,,NA
-Homicide,10,Homicide
-Intoxication and Liquor Violations,,NA
-Intoxication and Liquor Violations,174,Violation by Minor
-Intoxication and Liquor Violations,176,Violation by Adult
-Intoxication and Liquor Violations,177,Intoxicated Person
-Kidnap,,NA
-Kidnap,110,Kidnap
-Narcotics,,NA
-Narcotics,181,NARS Report
-Narcotics,182,Narcotics Warrant Service
-Narcotics,183,"Found, Recovered Narcotics"
-Narcotics,186,Drug Traffic Loitering
-Narcotics,184,Other
-Property Destruction (Damage),,NA
-Property Destruction (Damage),130,Property Destruction
-Property Destruction (Damage),139,Gang Graffiti
-Prowler,,NA
-Prowler,160,Prowler
-Prowler,161,Trespass
-Prowler,162,Trespass - Parks Exclusion
-Rape,,NA
-Rape,20,Unknown Suspect (Stranger)
-Rape,21,Known Suspect (Acquaintance)
-Robbery,,NA
-Robbery,30,Armed
-Robbery,31,"Strong Arm, Purse Snatch, Etc."
-Sex Offenses (Non-Rape),,NA
-Sex Offenses (Non-Rape),141,Lewd Conduct
-Sex Offenses (Non-Rape),142,Molesting
-Sex Offenses (Non-Rape),143,Failure to Register (Sex Offender)
-Suspicious Circumstances,,NA
-Suspicious Circumstances,280,Suspicious Person)
-Suspicious Circumstances,281,Suspicious Vehicle
-Suspicious Circumstances,282,"Building (Open Door, Etc.)"
-Theft,,NA
-Theft,61,Auto Accessories
-Theft,62,Bicycle
-Theft,63,Car Prowl
-Theft,64,Shoplift
-Theft,65,All Other
-Traffic,,NA
-Traffic,410,Abandoned
-Traffic,415,Blocking Traffic
-Traffic,430,Accident Investigation
-Traffic,440,Assist Motorist
-Traffic,450,DUI
-Traffic,460,Moving Violation
-Traffic,465,Pedestrian Violation
-Traffic,470,Parking Violation (Except Abandoned Car)
-Traffic,481,Traffic Control (Special Events)
-Traffic,482,Refuse To Stop (Pursuit)
-Vice,,NA
-Vice,121,Gambling
-Vice,122,Liquor (Business Establishment)
-Vice,124,Pornography
-Vice,125,Prostitution
-Vice,126,Other
-Vice,127,Violation of SOAP Order
-Warrant Services,,NA
-Warrant Services,191,Felony
-Warrant Services,192,Misdemeanor
-"Weapon, Person With",,NA
-"Weapon, Person With",291,Gun
-"Weapon, Person With",292,Other Weapon
+"","MIR.Codes.Desc","MIR.Codes","info"
+"2","Alarms, False",200,"Commercial (Banks, ATM, Schools, Business)"
+"3","Alarms, False",201,"Residential Burglary"
+"4","Alarms, False",202,"Commercial Robbery (Bank, Panic, Duress)"
+"5","Alarms, False",203,"Residential Panic or Duress"
+"6","Alarms, False",204,"Vehicle Alarms"
+"7","Alarms, False",205,"Alarm-Other (VARDA, PDT, Fire, Local, Metro Etc.)"
+"9","Arson, Bombs, Explosion",90,"Bombs, Explosion, Large Fireworks"
+"10","Arson, Bombs, Explosion",91,"Arson"
+"11","Arson, Bombs, Explosion",92,"Reckless Burning"
+"13","Assaults",40,"Assaults, Other"
+"14","Assaults",41,"Harassment, Threats"
+"15","Assaults",42,"By Telephone, Writing"
+"16","Assaults",43,"Firearm Involved"
+"17","Assaults",49,"Gang Related"
+"19","Automobiles",71,"Auto Theft"
+"20","Automobiles",72,"Auto Theft & Recovery"
+"21","Automobiles",73,"Recovery (Theft)"
+"22","Automobiles",74,"License Plate Theft or Loss"
+"24","Burglary",50,"Residential, Unoccupied"
+"25","Burglary",51,"Residential, Occupied"
+"26","Burglary",52,"Nonresidential/Commercial (Includes Schools, Churches, Public Bldgs.)"
+"27","Burglary",53,"Unoccupied Structure On Residential Property (Garage, Storage Area, Etc.)"
+"29","Disturbance",242,"Fight"
+"30","Disturbance",243,"Juvenile"
+"31","Disturbance",244,"Noise"
+"32","Disturbance",245,"Other"
+"33","Disturbance",246,"Residential Noise"
+"34","Disturbance",249,"Gang Related"
+"36","Domestic Disturbance/Violence (DVPA Related)",80,"DV Threats by Phone or Writing"
+"37","Domestic Disturbance/Violence (DVPA Related)",81,"DV Arguments, Dist. (No Arrest)"
+"38","Domestic Disturbance/Violence (DVPA Related)",82,"DV (Arrest Discretionary)"
+"39","Domestic Disturbance/Violence (DVPA Related)",83,"DV /Assault (Arrest Mandatory)"
+"40","Domestic Disturbance/Violence (DVPA Related)",84,"DV Standby to Assure Peace"
+"41","Domestic Disturbance/Violence (DVPA Related)",85,"Service of Court Order"
+"42","Domestic Disturbance/Violence (DVPA Related)",86,"Assist Victim by Court Order"
+"43","Domestic Disturbance/Violence (DVPA Related)",87,"Enforce Court Order (Arrest Mand.)"
+"45","Drive by Shooting (No Injuries)",179,"Drive by Shooting (No Injuries)"
+"47","Hazards",350,"Hazards"
+"49","Homicide",10,"Homicide"
+"51","Intoxication and Liquor Violations",174,"Violation by Minor"
+"52","Intoxication and Liquor Violations",176,"Violation by Adult"
+"53","Intoxication and Liquor Violations",177,"Intoxicated Person"
+"55","Kidnap",110,"Kidnap"
+"57","Narcotics",181,"NARS Report"
+"58","Narcotics",182,"Narcotics Warrant Service"
+"59","Narcotics",183,"Found, Recovered Narcotics"
+"60","Narcotics",186,"Drug Traffic Loitering"
+"61","Narcotics",184,"Other"
+"63","Property Destruction (Damage)",130,"Property Destruction"
+"64","Property Destruction (Damage)",139,"Gang Graffiti"
+"66","Prowler",160,"Prowler"
+"67","Prowler",161,"Trespass"
+"68","Prowler",162,"Trespass - Parks Exclusion"
+"70","Rape",20,"Unknown Suspect (Stranger)"
+"71","Rape",21,"Known Suspect (Acquaintance)"
+"73","Robbery",30,"Armed"
+"74","Robbery",31,"Strong Arm, Purse Snatch, Etc."
+"76","Sex Offenses (Non-Rape)",141,"Lewd Conduct"
+"77","Sex Offenses (Non-Rape)",142,"Molesting"
+"78","Sex Offenses (Non-Rape)",143,"Failure to Register (Sex Offender)"
+"80","Suspicious Circumstances",280,"Suspicious Person)"
+"81","Suspicious Circumstances",281,"Suspicious Vehicle"
+"82","Suspicious Circumstances",282,"Building (Open Door, Etc.)"
+"84","Theft",61,"Auto Accessories"
+"85","Theft",62,"Bicycle"
+"86","Theft",63,"Car Prowl"
+"87","Theft",64,"Shoplift"
+"88","Theft",65,"All Other"
+"90","Traffic",410,"Abandoned"
+"91","Traffic",415,"Blocking Traffic"
+"92","Traffic",430,"Accident Investigation"
+"93","Traffic",440,"Assist Motorist"
+"94","Traffic",450,"DUI"
+"95","Traffic",460,"Moving Violation"
+"96","Traffic",465,"Pedestrian Violation"
+"97","Traffic",470,"Parking Violation (Except Abandoned Car)"
+"98","Traffic",481,"Traffic Control (Special Events)"
+"99","Traffic",482,"Refuse To Stop (Pursuit)"
+"101","Vice",121,"Gambling"
+"102","Vice",122,"Liquor (Business Establishment)"
+"103","Vice",124,"Pornography"
+"104","Vice",125,"Prostitution"
+"105","Vice",126,"Other"
+"106","Vice",127,"Violation of SOAP Order"
+"108","Warrant Services",191,"Felony"
+"109","Warrant Services",192,"Misdemeanor"
+"111","Weapon, Person With",291,"Gun"
+"112","Weapon, Person With",292,"Other Weapon"
