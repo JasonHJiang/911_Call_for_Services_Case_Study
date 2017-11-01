@@ -1,0 +1,286 @@
+---
+title: "caseStudy2-version2"
+author: "Gloria"
+date: "2017/11/1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+response: specific time; 
+```{r}
+library(xlsx)
+setwd("C:/Users/Lenovo/Desktop/STAT 440/caseStudy 2")
+dat <- read.csv("Seattle_Police_Department_911_Incident_Response.csv", header = TRUE, sep = ",")
+dat1 <- dat # dat1 is the backup to save time, if screw up somehow, use dat<-dat1 to recover
+dat <- dat[c(4,5,7,8,11,13:14)]
+# [1] "Event.Clearance.Code" "Event.Clearance.Date" "Zone.Beat" "Longitude"           
+# [5] "Latitude"   
+
+levels(dat$Event.Clearance.Code)
+dat$Event.Clearance.Code <- as.character(dat$Event.Clearance.Code)
+dat <- dat[dat$Event.Clearance.Code!='',]
+dat <- dat[dat$Event.Clearance.Code!='NULL',]
+dim(dat)
+# double check
+levels(as.factor(dat$Event.Clearance.Code))
+
+levels(dat$Zone.Beat)
+dat$Zone.Beat <- as.character(dat$Zone.Beat)
+dat <- dat[dat$Zone.Beat != '',]
+dim(dat)
+# double check
+levels(as.factor(dat$Zone.Beat))
+
+sort(prop.table(table(dat$Event.Clearance.Code)), decreasing = TRUE)[1:5]
+sort(table(dat$Event.Clearance.Code), decreasing = FALSE)
+
+levels(dat$Event.Clearance.Date)
+dat$Event.Clearance.Date <- as.character(dat$Event.Clearance.Date)
+dat <- dat[dat$Event.Clearance.Date != '',]
+dim(dat)
+
+levels(as.factor(dat$Longitude))
+levels(as.factor(dat$Latitude))
+range(dat$Longitude)
+range(dat$Latitude)
+
+
+code <- read.csv(url("https://raw.githubusercontent.com/jasonjang714/911_Call_for_Services_Case_Study/master/seattle_code.csv"), as.is = TRUE, na.strings = c("",NA))
+code1 <- code
+code <- code[which(!is.na(code$MIR.Codes)),]
+event_clearance_code_investg <- code$MIR.Codes
+dat2 <- dat[dat$Event.Clearance.Code %in% event_clearance_code_investg,]
+sort(prop.table(table(dat2$Event.Clearance.Code)), decreasing = TRUE)[1:5]
+sort(table(dat2$Event.Clearance.Code), decreasing = TRUE)[1:5]
+write.csv(code,"seattle_code.csv")
+
+
+```
+
+
+GOAL:Can you build a method to suggest what times of day, week, or year that a greater police presence would be useful
+```{r}
+Sys.setenv("LANGUAGE"="En")
+Sys.setlocale("LC_ALL", "English")
+library(dplyr)
+library(stringr)
+dsm <- dat2
+date_time <- as.data.frame(str_split_fixed(dsm$Event.Clearance.Date, " ",3),stringsAsFactors = FALSE)
+names(date_time) <- c("MM.DD.YY","spc_time","AM.PM")
+
+MM.DD.YY <- as.data.frame(date_time$MM.DD.YY)
+spc_time <- as.data.frame(date_time$spc_time)
+AM.PM <- as.data.frame(date_time$AM.PM)
+
+colnames(MM.DD.YY) <- 'MM.DD.YY'
+colnames(spc_time) <- 'spc_time'
+colnames(AM.PM) <- 'AM.PM'
+
+dsm <- cbind(dsm,MM.DD.YY, spc_time, AM.PM)
+
+```
+
+Explainatory Analysis: histograms of date
+```{r}
+split_mdy <- as.data.frame((str_split_fixed(MM.DD.YY$MM.DD.YY, "/", 3)), stringsAsFactors = FALSE)
+mm <- as.data.frame(as.numeric(unlist(split_mdy[1])))
+dd <- as.data.frame(as.numeric(unlist(split_mdy[2])))
+yy <- as.data.frame(as.numeric(unlist(split_mdy[3])))
+hist(mm[,1])
+hist(dd[,1])
+hist(yy[,1])
+# how about a week?
+MM.DD.YY$MM.DD.YY <- strptime(MM.DD.YY$MM.DD.YY,format="%m/%d/%Y")
+barplot(prop.table(sort(table(weekdays(MM.DD.YY$MM.DD.YY)))))
+
+```
+
+Explainatory Analysis: histogram of times
+```{r}
+require(data.table)
+timecmb <- cbind(spc_time,AM.PM)
+timecmb$cmd <- paste(timecmb$spc_time, timecmb$AM.PM, sep=" ")
+timecmb$spc_time <- NULL
+timecmb$AM.PM <- NULL
+
+timecmb$cmd <- strptime(timecmb[,1], format="%I:%M:%S %p")
+timecmb <- as.data.frame(lapply(timecmb,as.character), stringsAsFactors = FALSE)
+func <- function(x)
+{
+  x <- str_split_fixed(as.character(x)," ",2)[2]
+  return(x)
+}
+timecmb <- transpose(as.data.frame(lapply(timecmb$cmd, func), stringsAsFactors = FALSE))
+
+split_hms <- as.data.frame((str_split_fixed(timecmb$V1, ":", 3)), stringsAsFactors = FALSE)
+hh <- as.data.frame(as.numeric(unlist(split_hms[1])))
+mminute <- as.data.frame(as.numeric(unlist(split_hms[2])))
+ss <- as.data.frame(as.numeric(unlist(split_hms[3])))
+names(hh) <- "hh"
+names(mminute) <- "mminute"
+names(ss) <- "ss"
+
+hist(hh[,1])
+hist(mminute[,1])
+hist(ss[,1])
+```
+
+Explainatory Analysis: analyze the whole year
+```{r}
+require(plyr)
+sum_date <- cbind(mm,dd,yy,timecmb)
+names(sum_date) <- c("mm","dd","yy","timecmb")
+sum_date$yy <- 2017
+sum_date$mmddyy <- paste(sum_date$mm,sum_date$dd,sum_date$yy,sep='/')
+sum_date$sum_date <- paste(sum_date$mmddyy,sum_date$timecmb,sep=" ")
+# sum_date <- as.data.frame(lapply(sum_date, as.factor))
+sum_date <- as.data.frame(sum_date$sum_date, stringsAsFactors = FALSE)
+sum_date <- na.omit(sum_date)
+names(sum_date) <- "sum_date1"
+require(plyr)
+sum_date_count_table <- count(sum_date$sum_date1) # weird... used to be count(sum_date$sum_date1)
+more_times_incidents <-sum_date_count_table[which(sum_date_count_table$n >= 8),]
+less_times_incidents <- sum_date_count_table[which(sum_date_count_table$n < 8),]
+```
+
+switch MM.DD.YY to weekdays - response
+set AM.PM as factor variables
+some MM.DD.YY not in standard form (i.e, cannot change to date)
+```{r}
+lct <- Sys.getlocale("LC_TIME")
+Sys.setlocale("LC_TIME", "C")
+Sys.setlocale("LC_TIME", lct)
+weekday <- weekdays(as.Date(dsm$MM.DD.YY, "%m/%d/%Y"))
+weekday <- as.factor(weekday)
+ds_full <- cbind(weekday, dsm)
+sum_day <- NA
+ds_full <- cbind(sum_day, ds_full, hh, mminute, ss)
+ds_full$Event.Clearance.Group <- as.factor(ds_full$Event.Clearance.Group)
+
+
+
+night <- c(0:5)
+morning <- c(6:12)
+noon <- c(13:17)
+evening <- c(18:24)
+ds_full$sum_day[which(ds_full$hh %in% morning)] <- "morning"
+ds_full$sum_day[which(ds_full$hh %in% noon)] <- "noon"
+ds_full$sum_day[which(ds_full$hh %in% evening)] <- "evening"
+ds_full$sum_day[which(ds_full$hh %in% night)] <- "night"
+
+
+
+ds_full$sum_day <- as.factor(ds_full$sum_day)
+ds_full$Event.Clearance.Description <- as.factor(ds_full$Event.Clearance.Description)
+names(ds_full)
+ds_full <- na.omit(ds_full)
+
+
+ds_full1 <- ds_full[, -c(4:6, 10:11, 13:15)]
+ds_full1$Event.Clearance.Code <- as.factor(ds_full$Event.Clearance.Code)
+ds_full1$Zone.Beat <- as.factor(ds_full$Zone.Beat)
+
+
+write.csv(ds_full1, "Seattle_0.005_analysis.csv") 
+```
+
+LASSO model - sum_day as response
+```{r}
+library(glmnet)
+library(nnet)
+set.seed(1234)
+
+## Possibility 1: Take a sample of 0.5% of the rows
+fraction = 0.005
+set.seed(12345) ## Change this to your own number
+sample_rows = sample(1:nrow(ds_full1), floor(nrow(ds_full1) * fraction))
+ds_full2 = ds_full1[sample_rows,]
+#ds_full2 <- subset(ds_full2, select = -c(hh,mm))
+
+train <- ds_full2[1:round(0.8*nrow(ds_full2)), ]
+test <- ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), -1]
+y_real <- as.vector(ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), 1])
+
+x_lasso <- data.matrix(train[,-1])
+y_lasso <- train[,1]
+fit_lasso <- cv.glmnet(x_lasso, y_lasso, family="multinomial", type.measure = "class")
+
+fit_lasso
+
+fit_lasso$lambda.min
+fit_lasso$lambda.1se
+plot(fit_lasso)
+
+
+coef(fit_lasso, s="lambda.min")
+coef(fit_lasso, s="lambda.1se")
+
+newX <- data.matrix(test)
+
+pred_lasso_min <- predict(fit_lasso, newx=newX, type = "class", s="lambda.min")
+result_lasso_min <- mapply(grepl, pred_lasso_min, y_real)
+accRate_lasso_min <- sum(result_lasso_min)/length(pred_lasso_min)
+accRate_lasso_min
+```
+
+LASSO Model - weekdays as response
+```{r}
+
+train2 <- ds_full2[1:round(0.8*nrow(ds_full2)), ]
+test2 <- ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), -2]
+y_real2 <- as.vector(ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), 2])
+
+x_lasso2 <- data.matrix(train2[,-2])
+y_lasso2 <- train2[,2]
+fit_lasso2 <- cv.glmnet(x_lasso2, y_lasso2, family="multinomial", type.measure = "class")
+
+fit_lasso2
+
+fit_lasso2$lambda.min
+fit_lasso2$lambda.1se
+plot(fit_lasso2)
+
+
+coef(fit_lasso2, s="lambda.min")
+coef(fit_lasso2, s="lambda.1se")
+
+newX2 <- data.matrix(test2)
+
+pred_lasso_min2 <- predict(fit_lasso2, newx=newX2, type = "class", s="lambda.min")
+result_lasso_min2 <- mapply(grepl, pred_lasso_min2, y_real2)
+accRate_lasso_min2 <- sum(result_lasso_min2)/length(pred_lasso_min2)
+accRate_lasso_min2
+```
+
+Logit - sum_Day as response
+```{r}
+fit_log <- multinom(sum_day~., data = train)
+pred_log <- predict(fit_log, newdata = test, "class")
+compare_log <- cbind(y_real, as.numeric(pred_log))
+colnames(compare_log) <- c("real value", "predict value")
+compare_log <- as.data.frame(compare_log)
+compare_log$`real value` <- as.numeric(compare_log$`real value`)
+compare_log$`predict value` <- as.numeric(compare_log$`predict value`)
+
+log_result1 <- 0
+for (i in 1:nrow(compare_log)){
+  if (compare_log$`real value`[i] == compare_log$`predict value`[i]){
+    log_result1 <- log_result1+1
+  }
+  else{
+    log_result1 <- log_result1
+  }
+}
+
+accRate_log1 <- log_result1/nrow(compare_log)
+accRate_log1
+```
+
+
+
+
+
+
