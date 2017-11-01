@@ -225,34 +225,12 @@ result_lasso_min <- mapply(grepl, pred_lasso_min, y_real)
 accRate_lasso_min <- sum(result_lasso_min)/length(pred_lasso_min)
 accRate_lasso_min
 ```
-
-LASSO Model - weekdays as response
+Confusion matrix
+introduction: https://cran.r-project.org/web/packages/caret/caret.pdf
 ```{r}
-
-train2 <- ds_full2[1:round(0.8*nrow(ds_full2)), ]
-test2 <- ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), -2]
-y_real2 <- as.vector(ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), 2])
-
-x_lasso2 <- data.matrix(train2[,-2])
-y_lasso2 <- train2[,2]
-fit_lasso2 <- cv.glmnet(x_lasso2, y_lasso2, family="multinomial", type.measure = "class")
-
-fit_lasso2
-
-fit_lasso2$lambda.min
-fit_lasso2$lambda.1se
-plot(fit_lasso2)
-
-
-coef(fit_lasso2, s="lambda.min")
-coef(fit_lasso2, s="lambda.1se")
-
-newX2 <- data.matrix(test2)
-
-pred_lasso_min2 <- predict(fit_lasso2, newx=newX2, type = "class", s="lambda.min")
-result_lasso_min2 <- mapply(grepl, pred_lasso_min2, y_real2)
-accRate_lasso_min2 <- sum(result_lasso_min2)/length(pred_lasso_min2)
-accRate_lasso_min2
+library(caret)
+library(e1071)
+confusionMatrix(pred_lasso_min, y_real)
 ```
 
 Logit - sum_Day as response
@@ -277,6 +255,10 @@ for (i in 1:nrow(compare_log)){
 
 accRate_log1 <- log_result1/nrow(compare_log)
 accRate_log1
+```
+Confusion matrix for logit model
+```{r}
+confusionMatrix(pred_log, y_real)
 ```
 
 
