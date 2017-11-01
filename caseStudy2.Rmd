@@ -10,64 +10,94 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(xlsx)
-setwd("C:/Users/Lenovo/Desktop/STAT 440/caseStudy 2")
+# library(xlsx)
 dat <- read.csv("Seattle_Police_Department_911_Incident_Response.csv", header = TRUE, sep = ",")
-names(dat)[1] <- "CAD.CDW.ID"
-fraction <- 0.05
-set.seed(1234)
-sample_rows <- sample(1:nrow(dat), floor(nrow(dat)*fraction))
+dat1 <- dat # dat1 is the backup to save time, if screw up somehow, use dat<-dat1 to recover
+dat <- dat[c(4,5,7,8,11,13:14)]
+# [1] "Event.Clearance.Code" "Event.Clearance.Date" "Zone.Beat" "Longitude"           
+# [5] "Latitude"   
 
-dat5 <- dat[sample_rows,]
-write.csv(dat5, "Seattle_0.05.csv")
+levels(dat$Event.Clearance.Code)
+dat$Event.Clearance.Code <- as.character(dat$Event.Clearance.Code)
+dat <- dat[dat$Event.Clearance.Code!='',]
+dat <- dat[dat$Event.Clearance.Code!='NULL',]
+dim(dat)
+# double check
+levels(as.factor(dat$Event.Clearance.Code))
 
+levels(dat$Zone.Beat)
+dat$Zone.Beat <- as.character(dat$Zone.Beat)
+dat <- dat[dat$Zone.Beat != '',]
+dim(dat)
+# double check
+levels(as.factor(dat$Zone.Beat))
 
-dat = dat5 # overwrite the old dat
-dat5 = NULL # To clear RAM
-gc()
+sort(prop.table(table(dat$Event.Clearance.Code)), decreasing = TRUE)[1:5]
+sort(table(dat$Event.Clearance.Code), decreasing = FALSE)
+
+levels(dat$Event.Clearance.Date)
+dat$Event.Clearance.Date <- as.character(dat$Event.Clearance.Date)
+dat <- dat[dat$Event.Clearance.Date != '',]
+dim(dat)
+
+# They are fine
+levels(as.factor(dat$Longitude))
+levels(as.factor(dat$Latitude))
+range(dat$Longitude)
+range(dat$Latitude)
+
+code <- read.csv("seattle_code.csv", as.is = TRUE, na.strings = c("",NA))
+code1 <- code
+code <- code[which(!is.na(code$MIR.Codes)),]
+event_clearance_code_investg <- code$MIR.Codes
+dat2 <- dat[dat$Event.Clearance.Code %in% event_clearance_code_investg,]
+sort(prop.table(table(dat2$Event.Clearance.Code)), decreasing = TRUE)[1:5]
+sort(table(dat2$Event.Clearance.Code), decreasing = TRUE)[1:5]
+# write.csv(code,"seattle_code.csv")
+```
+Clearning: count() is a better version of table()
+1.Event.Clearance.Code is related to the Event.Clearance.Desscription
+2. rare data cleaning
+```{r}
+dat2$Event.Clearance.Description <- as.character(dat2$Event.Clearance.Description)
+require(plyr)
+code_count <- count(dat2$Event.Clearance.Code)
+
+rare_code <- code_count[code_count$freq <= 100,]
+rare_code_x <- as.vector(rare_code$x)
+
+dat2 <- subset(dat2,  ! dat2$Event.Clearance.Description %in% rare_code_x)
+
+head(dat2)
 ```
 
 GOAL:Can you build a method to suggest what times of day, week, or year that a greater police presence would be useful
 ```{r}
 Sys.setenv("LANGUAGE"="En")
 Sys.setlocale("LC_ALL", "English")
-ds <- read.csv("Seattle_0.05.csv", header = TRUE, sep=",")
-ds <- ds[,-1]
-head(ds)
-names(ds)
+# ds <- read.csv("Seattle_0.05.csv", header = TRUE, sep=",")
+# ds <- ds[,-1]
+# head(ds)
+# names(ds)
 ```
 
 
 ```{r}
 library(dplyr)
-dsm <- ds[c(1,2,4,5,7,8,13,14)]
-#"CAD.CDW.ID",  "CAD.Event.Number" ,"Event.Clearance.Code" 
-#"Event.Clearance.Description" , "Event.Clearance.Group" ,
-#"Event.Clearance.Date" , "Longitude" , "Latitude"
-dsm <- subset(dsm, dsm$Event.Clearance.Group == "AUTO THEFTS")
-head(dsm)
-for(i in 1:8){
-  if(sum(is.na(dsm[,i]))==0){
-    print("CHECK")
-  }
-  else{
-    print("NA")
-  }
-}
-
 library(stringr)
-dsm[,6] <- as.character(dsm[,6])
-date_time <- as.data.frame(str_split_fixed(dsm[,6], " ",3),stringsAsFactors = FALSE)
-MM.DD.YY <- as.data.frame(date_time[,1], stringsAsFactors = FALSE)
+dsm <- dat2
+date_time <- as.data.frame(str_split_fixed(dsm$Event.Clearance.Date, " ",3),stringsAsFactors = FALSE)
+names(date_time) <- c("MM.DD.YY","spc_time","AM.PM")
 
-spc_time <- as.data.frame(date_time[,2], stringsAsFactors = F)
-AM.PM <- as.factor(date_time[,3])
-names(MM.DD.YY) <- c("MM.DD.YY")
-names(spc_time) <- c("spc_time")
-names(AM.PM) <- c("AM.PM")
+MM.DD.YY <- as.data.frame(date_time$MM.DD.YY)
+spc_time <- as.data.frame(date_time$spc_time)
+AM.PM <- as.data.frame(date_time$AM.PM)
+
+colnames(MM.DD.YY) <- 'MM.DD.YY'
+colnames(spc_time) <- 'spc_time'
+colnames(AM.PM) <- 'AM.PM'
 
 dsm <- cbind(dsm,MM.DD.YY, spc_time, AM.PM)
-
 ```
 
 Explainatory Analysis: histograms of date
@@ -81,7 +111,7 @@ hist(dd[,1])
 hist(yy[,1])
 # how about a week?
 MM.DD.YY$MM.DD.YY <- strptime(MM.DD.YY$MM.DD.YY,format="%m/%d/%Y")
-barplot(prop.table(table(weekdays(MM.DD.YY$MM.DD.YY))))
+barplot(prop.table(sort(table(weekdays(MM.DD.YY$MM.DD.YY)))))
 ```
 
 Explainatory Analysis: histogram of times /// error in transpose function
@@ -105,6 +135,10 @@ split_hms <- as.data.frame((str_split_fixed(timecmb$V1, ":", 3)), stringsAsFacto
 hh <- as.data.frame(as.numeric(unlist(split_hms[1])))
 mminute <- as.data.frame(as.numeric(unlist(split_hms[2])))
 ss <- as.data.frame(as.numeric(unlist(split_hms[3])))
+names(hh) <- "hh"
+names(mminute) <- "mminute"
+names(ss) <- "ss"
+
 hist(hh[,1])
 hist(mminute[,1])
 hist(ss[,1])
@@ -118,38 +152,15 @@ names(sum_date) <- c("mm","dd","yy","timecmb")
 sum_date$yy <- 2017
 sum_date$mmddyy <- paste(sum_date$mm,sum_date$dd,sum_date$yy,sep='/')
 sum_date$sum_date <- paste(sum_date$mmddyy,sum_date$timecmb,sep=" ")
-sum_date <- as.data.frame(lapply(sum_date, as.factor))
+# sum_date <- as.data.frame(lapply(sum_date, as.factor))
 sum_date <- as.data.frame(sum_date$sum_date, stringsAsFactors = FALSE)
 sum_date <- na.omit(sum_date)
 names(sum_date) <- "sum_date1"
-sum_date_count_table <- count(sum_date$sum_date1)
-three_times_incidents <-sum_date_count_table[which(sum_date_count_table$freq > 2),]
-two_times_incidents <- sum_date_count_table[which(sum_date_count_table$freq == 2),]
-```
-
-Clearning: count() is a better version of table()
-1.Event.Clearance.Code is related to the Event.Clearance.Desscription
-2. rare data cleaning
-```{r}
-dsm$Event.Clearance.Description <- as.character(dsm$Event.Clearance.Description)
 require(plyr)
-des_count <- count(dsm$Event.Clearance.Description)
-group_count <- count(dsm$Event.Clearance.Group)
-
-rare_des <- des_count[des_count$freq <= 5,]
-rare_des_x <- as.vector(rare_des$x)
-
-dsm <- subset(dsm,  ! dsm$Event.Clearance.Description %in% rare_des_x)
-
-rare_group <- group_count[group_count$freq <= 5,]
-rare_group_x <- as.vector(rare_group$x)
-dsm <- subset(dsm, ! dsm$Event.Clearance.Group %in% rare_group_x)
-
-
-head(dsm)
+sum_date_count_table <- count(sum_date,sum_date1) # weird... used to be count(sum_date$sum_date1)
+more_times_incidents <-sum_date_count_table[which(sum_date_count_table$n >= 8),]
+less_times_incidents <- sum_date_count_table[which(sum_date_count_table$n < 8),]
 ```
-
-
 1. switch MM.DD.YY to weekdays - response
 2. set AM.PM as factor variables
 3. some MM.DD.YY not in standard form (i.e, cannot change to date)
@@ -163,38 +174,28 @@ ds_full <- cbind(weekday, dsm)
 ds_full <- na.omit(ds_full)
 ds_full$Event.Clearance.Group <- as.factor(ds_full$Event.Clearance.Description)
 
-day <- as.data.frame(str_split_fixed(ds_full$spc_time, ":", 3), stringAsFactor=F)
-hr <- day[,1]
-mins <-day[,2]
-sec <- day[,3]
 sum_day <- NA
-ds_full <- cbind(sum_day, ds_full, hr, mins, sec)
 
+ds_full <- cbind(sum_day, ds_full, hh, mminute, ss)
+night <- c(0:5)
+morning <- c(6:12)
+noon <- c(13:17)
+evening <- c(18:24)
+ds_full$sum_day[which(ds_full$hh %in% morning)] <- "morning"
+ds_full$sum_day[which(ds_full$hh %in% noon)] <- "noon"
+ds_full$sum_day[which(ds_full$hh %in% evening)] <- "evening"
+ds_full$sum_day[which(ds_full$hh %in% night)] <- "night"
 
-for (i in 1:nrow(ds_full)){
-
- if (ds_full$AM.PM[i] =="AM"){
-    if (ds_full$hr[i] %in% c("00","01","02","03","04","05")){
-      ds_full$sum_day[i] <- "night"
-    }
-    else{
-      ds_full$sum_day[i] <-"morning"
-    }
-  }
-  if (ds_full$AM.PM[i] == "PM"){
-    if (ds_full$hr[i] %in% c("00","01","02","03","04","05")){
-     ds_full$sum_day[i] <-"noon"
-    }
-    else{
-      ds_full$sum_day[i] <-"evening"
-    }
-  }
-}
 ds_full$sum_day <- as.factor(ds_full$sum_day)
 ds_full$Event.Clearance.Description <- as.factor(ds_full$Event.Clearance.Description)
 names(ds_full)
-ds_full <- subset(ds_full, select = -c(CAD.CDW.ID, CAD.Event.Number,Event.Clearance.Date,Event.Clearance.Group, Event.Clearance.Code, MM.DD.YY, spc_time, hr, mins, sec))
-write.csv(ds_full, "Seattle_0.05_analysis.csv")
+ds_full$mm <- str_split_fixed(ds_full$MM.DD.YY,"/",3)[,1]
+ds_full$mm <- as.factor(ds_full$mm)
+ds_full <- subset(ds_full, select = -c(Event.Clearance.Description,Event.Clearance.Group, spc_time, mminute, ss, AM.PM,Event.Clearance.Date, MM.DD.YY))
+ds_full$Event.Clearance.Code <- as.factor(ds_full$Event.Clearance.Code)
+ds_full$Zone.Beat <- as.factor(ds_full$Zone.Beat)
+ds_full$hh <- as.factor(ds_full$hh)
+# write.csv(ds_full, "Seattle_0.05_analysis.csv") 
 ```
 
 Regression model
@@ -203,9 +204,16 @@ LASSO
 library(glmnet)
 library(nnet)
 set.seed(1234)
-train <- ds_full[1:round(0.85*nrow(ds_full)), ]
-test <- ds_full[round(0.85*nrow(ds_full)+1):nrow(ds_full), -1]
-y_real <- as.vector(ds_full[round(0.85*nrow(ds_full)+1):nrow(ds_full), 1])
+
+## Possibility 1: Take a sample of 5% of the rows
+fraction = 0.005
+set.seed(12345) ## Change this to your own number
+sample_rows = sample(1:nrow(ds_full), floor(nrow(ds_full) * fraction))
+ds_full2 = ds_full[sample_rows,]
+
+train <- ds_full2[1:round(0.85*nrow(ds_full2)), ]
+test <- ds_full2[round(0.85*nrow(ds_full2)+1):nrow(ds_full2), -1]
+y_real <- as.vector(ds_full2[round(0.85*nrow(ds_full2)+1):nrow(ds_full2), 1])
 
 x_lasso <- data.matrix(train[,-1])
 y_lasso <- train[,1]
@@ -246,31 +254,5 @@ library(rpart)
 fit_rtree <- rpart(sum_day~.,data=train, method="class")
 plot(fit_rtree, uniform = T)
 text(fit_rtree, use.n = T, all = T, cex=0.5)
-```
-
-
-
-
-
-
-Examine the data
-```{r}
-library(lubridate)
-str(ds)
-ds$CAD.CDW.ID <- as.factor(ds$CAD.CDW.ID)
-ds$CAD.Event.Number <- as.factor(ds$CAD.Event.Number)
-ds$General.Offense.Number <- as.factor(ds$General.Offense.Number)
-ds$Event.Clearance.Date <- as.character(mdy_hms(ds$Event.Clearance.Date, tz=''))
-
-ds$At.Scene.Time <- as.Date(ds$At.Scene.Time)
-for (i in 1:ncol(ds))
-{
-  print(sprintf("%s: %s",colnames(ds)[i],nrow(count(ds[,i]))))
-}
-count(ds$District.Sector) # NULL:22
-count(ds$Zone.Beat)
-count(ds$Initial.Type.Description)
-count(ds$Event.Clearance.Group) # NULL:51
-count(ds$Initial.Type.Subgroup)
 ```
 
