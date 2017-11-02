@@ -179,7 +179,7 @@ names(ds_full)
 ds_full <- na.omit(ds_full)
 
 
-ds_full1 <- ds_full[, -c(4:6, 10:11, 13:15)]
+ds_full1 <- ds_full[, -c(4:7, 10:11, 13:15)]
 ds_full1$Event.Clearance.Code <- as.factor(ds_full$Event.Clearance.Code)
 ds_full1$Zone.Beat <- as.factor(ds_full$Zone.Beat)
 
@@ -261,6 +261,35 @@ Confusion matrix for logit model
 confusionMatrix(pred_log, y_real)
 ```
 
+
+
+Random Forest
+```{r}
+library(randomForest)
+fit_rf <- randomForest(sum_day~., data = train, mtry=3, importance=T)
+summary(fit_rf)
+
+pred_rf <- as.vector(predict(fit_rf, test))
+compare_rf <- cbind(y_real, pred_rf)
+compare_rf <- as.data.frame(compare_rf)
+compare_rf$y_real <- as.numeric(compare_rf$y_real)
+compare_rf$pred_rf <- as.numeric(compare_rf$pred_rf)
+
+rf_result <- 0
+for (i in 1:nrow(compare_rf)){
+  if (compare_rf$y_real[i] == compare_rf$pred_rf[i]){
+    rf_result <- rf_result+1
+  }
+  else{
+    rf_result <- rf_result
+  }
+}
+
+accRate_rf <- rf_result/nrow(compare_rf)
+accRate_rf
+
+confusionMatrix(pred_rf, y_real)
+```
 
 
 
