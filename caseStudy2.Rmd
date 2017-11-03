@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # library(xlsx)
-dat <- read.csv("Seattle_Police_Department_911_Incident_Response.csv", header = TRUE, sep = ",")
+dat <- read.csv("Seattle_Police_Department_911_Incident_Response.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 dat1 <- dat # dat1 is the backup to save time, if screw up somehow, use dat<-dat1 to recover
 dat <- dat[c(4,5,7,8,11,13:14)]
 # [1] "Event.Clearance.Code" "Event.Clearance.Date" "Zone.Beat" "Longitude"           
@@ -55,12 +55,30 @@ sort(prop.table(table(dat2$Event.Clearance.Code)), decreasing = TRUE)[1:5]
 sort(table(dat2$Event.Clearance.Code), decreasing = TRUE)[1:5]
 # write.csv(code,"seattle_code.csv")
 ```
+Load weather data for further use
+```{r}
+weather <- read.csv("Road_Weather_Information_Stations.csv", header=TRUE, as.is = TRUE, stringsAsFactors = FALSE)
+
+# detach(package:plyr)
+weather <- weather %>%
+  group_by(DateTime) %>%
+  summarise(avgtem = mean(AirTemperature)) %>% as.data.frame()
+```
+
+Join the table
+```{r}
+dat2 <- dat2 %>%
+  left_join(weather, by = c("Event.Clearance.Date" = "DateTime"))
+dat2 <- dat2[which(!is.na(dat2$avgtem)),]
+```
+
 Clearning: count() is a better version of table()
 1.Event.Clearance.Code is related to the Event.Clearance.Desscription
 2. rare data cleaning
 ```{r}
 dat2$Event.Clearance.Description <- as.character(dat2$Event.Clearance.Description)
-require(plyr)
+library(plyr)
+library(dplyr)
 code_count <- count(dat2$Event.Clearance.Code)
 
 rare_code <- code_count[code_count$freq <= 100,]
@@ -194,22 +212,7 @@ ds_full$mm <- as.factor(ds_full$mm)
 ds_full$Event.Clearance.Code <- as.factor(ds_full$Event.Clearance.Code)
 ds_full$Zone.Beat <- as.factor(ds_full$Zone.Beat)
 ds_full$hh <- as.factor(ds_full$hh)
-```
-Load weather data for further use
-```{r}
-weather <- read.csv("Road_Weather_Information_Stations.csv", header=TRUE, as.is = TRUE, stringsAsFactors = FALSE)
 
-detach(package:plyr)
-weather <- weather %>%
-  group_by(DateTime) %>%
-  summarise(avgtem = mean(AirTemperature)) %>% as.data.frame()
-
-```
-Join the table
-```{r}
-ds_full <- ds_full %>%
-  left_join(weather, by = c("Event.Clearance.Date" = "DateTime"))
-ds_full <- ds_full[which(!is.na(ds_full$avgtem)),]
 ds_full1 <- subset(ds_full, select = -c(Event.Clearance.Description,Event.Clearance.Group, spc_time, mminute, ss, AM.PM,Event.Clearance.Date, MM.DD.YY))
 # write.csv(ds_full, "Seattle_0.05_analysis.csv") 
 ```
@@ -222,7 +225,7 @@ library(nnet)
 set.seed(1234)
 
 ## Possibility 1: Take a sample of 0.5% of the rows
-fraction = 0.005
+fraction = 0.05
 set.seed(12345) ## Change this to your own number
 sample_rows = sample(1:nrow(ds_full1), floor(nrow(ds_full1) * fraction))
 ds_full2 = ds_full1[sample_rows,]
