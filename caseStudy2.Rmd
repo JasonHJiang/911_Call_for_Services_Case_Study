@@ -17,32 +17,32 @@ dat <- dat[c(4,5,7,8,11,13:14)]
 # [1] "Event.Clearance.Code" "Event.Clearance.Date" "Zone.Beat" "Longitude"           
 # [5] "Latitude"   
 
-levels(dat$Event.Clearance.Code)
+# levels(dat$Event.Clearance.Code)
 dat$Event.Clearance.Code <- as.character(dat$Event.Clearance.Code)
 dat <- dat[dat$Event.Clearance.Code!='',]
 dat <- dat[dat$Event.Clearance.Code!='NULL',]
 dim(dat)
 # double check
-levels(as.factor(dat$Event.Clearance.Code))
+# levels(as.factor(dat$Event.Clearance.Code))
 
-levels(dat$Zone.Beat)
+# levels(dat$Zone.Beat)
 dat$Zone.Beat <- as.character(dat$Zone.Beat)
 dat <- dat[dat$Zone.Beat != '',]
 dim(dat)
 # double check
-levels(as.factor(dat$Zone.Beat))
+# levels(as.factor(dat$Zone.Beat))
 
 sort(prop.table(table(dat$Event.Clearance.Code)), decreasing = TRUE)[1:5]
 sort(table(dat$Event.Clearance.Code), decreasing = FALSE)
 
-levels(dat$Event.Clearance.Date)
+# levels(dat$Event.Clearance.Date)
 dat$Event.Clearance.Date <- as.character(dat$Event.Clearance.Date)
 dat <- dat[dat$Event.Clearance.Date != '',]
 dim(dat)
 
 # They are fine
-levels(as.factor(dat$Longitude))
-levels(as.factor(dat$Latitude))
+# levels(as.factor(dat$Longitude))
+# levels(as.factor(dat$Latitude))
 range(dat$Longitude)
 range(dat$Latitude)
 
@@ -55,6 +55,18 @@ sort(prop.table(table(dat2$Event.Clearance.Code)), decreasing = TRUE)[1:5]
 sort(table(dat2$Event.Clearance.Code), decreasing = TRUE)[1:5]
 # write.csv(code,"seattle_code.csv")
 ```
+Load weather data for further use
+```{r}
+weather <- read.csv("Road_Weather_Information_Stations.csv", header=TRUE, as.is = TRUE, stringsAsFactors = FALSE)
+
+detach(package:plyr)
+weather <- weather %>%
+  group_by(DateTime) %>%
+  summarise(avgtem = mean(AirTemperature)) %>% as.data.frame()
+
+```
+
+
 Clearning: count() is a better version of table()
 1.Event.Clearance.Code is related to the Event.Clearance.Desscription
 2. rare data cleaning
@@ -68,7 +80,7 @@ rare_code_x <- as.vector(rare_code$x)
 
 dat2 <- subset(dat2,  ! dat2$Event.Clearance.Description %in% rare_code_x)
 
-head(dat2)
+# head(dat2)
 ```
 
 GOAL:Can you build a method to suggest what times of day, week, or year that a greater police presence would be useful
@@ -157,7 +169,7 @@ sum_date <- as.data.frame(sum_date$sum_date, stringsAsFactors = FALSE)
 sum_date <- na.omit(sum_date)
 names(sum_date) <- "sum_date1"
 require(plyr)
-sum_date_count_table <- count(sum_date,sum_date1) # weird... used to be count(sum_date$sum_date1)
+sum_date_count_table <- count(sum_date$sum_date1) # weird... used to be count(sum_date$sum_date1)
 more_times_incidents <-sum_date_count_table[which(sum_date_count_table$n >= 8),]
 less_times_incidents <- sum_date_count_table[which(sum_date_count_table$n < 8),]
 ```
@@ -191,10 +203,13 @@ ds_full$Event.Clearance.Description <- as.factor(ds_full$Event.Clearance.Descrip
 names(ds_full)
 ds_full$mm <- str_split_fixed(ds_full$MM.DD.YY,"/",3)[,1]
 ds_full$mm <- as.factor(ds_full$mm)
-ds_full <- subset(ds_full, select = -c(Event.Clearance.Description,Event.Clearance.Group, spc_time, mminute, ss, AM.PM,Event.Clearance.Date, MM.DD.YY))
 ds_full$Event.Clearance.Code <- as.factor(ds_full$Event.Clearance.Code)
 ds_full$Zone.Beat <- as.factor(ds_full$Zone.Beat)
 ds_full$hh <- as.factor(ds_full$hh)
+ds_full %<>%
+  left_join(weather, by = c("Event.Clearance.Date" = "DateTime"))
+ds_full <- ds_full[which(!is.na(ds_full$avgtem)),]
+ds_full <- subset(ds_full, select = -c(Event.Clearance.Description,Event.Clearance.Group, spc_time, mminute, ss, AM.PM,Event.Clearance.Date, MM.DD.YY))
 # write.csv(ds_full, "Seattle_0.05_analysis.csv") 
 ```
 
@@ -225,8 +240,8 @@ fit_lasso$lambda.1se
 plot(fit_lasso)
 
 
-coef(fit_lasso, s="lambda.min")
-coef(fit_lasso, s="lambda.1se")
+# coef(fit_lasso, s="lambda.min")
+# coef(fit_lasso, s="lambda.1se")
 
 newX <- data.matrix(test)
 
@@ -242,17 +257,16 @@ fit_log <- multinom(sum_day~., data = train)
 pred_log <- predict(fit_log, newdata = test, "class")
 compare_log <- cbind(y_real, as.numeric(pred_log))
 colnames(compare_log) <- c("real value", "predict value")
-compare_log
+# compare_log
 
 ```
 
 
 regression tree
 ```{r}
-library(boot)
-library(rpart)
-fit_rtree <- rpart(sum_day~.,data=train, method="class")
-plot(fit_rtree, uniform = T)
-text(fit_rtree, use.n = T, all = T, cex=0.5)
+# library(boot)
+# library(rpart)
+# fit_rtree <- rpart(sum_day~.,data=train, method="class")
+# plot(fit_rtree, uniform = T)
+# text(fit_rtree, use.n = T, all = T, cex=0.5)
 ```
-
