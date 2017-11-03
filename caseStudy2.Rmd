@@ -206,33 +206,35 @@ ds_full$mm <- as.factor(ds_full$mm)
 ds_full$Event.Clearance.Code <- as.factor(ds_full$Event.Clearance.Code)
 ds_full$Zone.Beat <- as.factor(ds_full$Zone.Beat)
 ds_full$hh <- as.factor(ds_full$hh)
-ds_full %<>%
+ds_full <- ds_full %>%
   left_join(weather, by = c("Event.Clearance.Date" = "DateTime"))
 ds_full <- ds_full[which(!is.na(ds_full$avgtem)),]
-ds_full <- subset(ds_full, select = -c(Event.Clearance.Description,Event.Clearance.Group, spc_time, mminute, ss, AM.PM,Event.Clearance.Date, MM.DD.YY))
+ds_full1 <- subset(ds_full, select = -c(Event.Clearance.Description,Event.Clearance.Group, spc_time, mminute, ss, AM.PM,Event.Clearance.Date, MM.DD.YY))
 # write.csv(ds_full, "Seattle_0.05_analysis.csv") 
 ```
 
 Regression model
-LASSO
+LASSO model - sum_day as response
 ```{r}
 library(glmnet)
 library(nnet)
 set.seed(1234)
 
-## Possibility 1: Take a sample of 5% of the rows
+## Possibility 1: Take a sample of 0.5% of the rows
 fraction = 0.005
 set.seed(12345) ## Change this to your own number
-sample_rows = sample(1:nrow(ds_full), floor(nrow(ds_full) * fraction))
-ds_full2 = ds_full[sample_rows,]
+sample_rows = sample(1:nrow(ds_full1), floor(nrow(ds_full1) * fraction))
+ds_full2 = ds_full1[sample_rows,]
+#ds_full2 <- subset(ds_full2, select = -c(hh,mm))
 
-train <- ds_full2[1:round(0.85*nrow(ds_full2)), ]
-test <- ds_full2[round(0.85*nrow(ds_full2)+1):nrow(ds_full2), -1]
-y_real <- as.vector(ds_full2[round(0.85*nrow(ds_full2)+1):nrow(ds_full2), 1])
+train <- ds_full2[1:round(0.8*nrow(ds_full2)), ]
+test <- ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), -1]
+y_real <- as.vector(ds_full2[round(0.8*nrow(ds_full2)+1):nrow(ds_full2), 1])
 
 x_lasso <- data.matrix(train[,-1])
 y_lasso <- train[,1]
 fit_lasso <- cv.glmnet(x_lasso, y_lasso, family="multinomial", type.measure = "class")
+
 fit_lasso
 
 fit_lasso$lambda.min
@@ -240,8 +242,8 @@ fit_lasso$lambda.1se
 plot(fit_lasso)
 
 
-# coef(fit_lasso, s="lambda.min")
-# coef(fit_lasso, s="lambda.1se")
+coef(fit_lasso, s="lambda.min")
+coef(fit_lasso, s="lambda.1se")
 
 newX <- data.matrix(test)
 
@@ -250,6 +252,72 @@ result_lasso_min <- mapply(grepl, pred_lasso_min, y_real)
 accRate_lasso_min <- sum(result_lasso_min)/length(pred_lasso_min)
 accRate_lasso_min
 ```
+Confusion matrix
+introduction: https://cran.r-project.org/web/packages/caret/caret.pdf
+```{r}
+library(caret)
+library(e1071)
+confusionMatrix(pred_lasso_min, y_real)
+```
+
+Logit - sum_Day as response
+```{r}
+fit_log <- multinom(sum_day~., data = train)
+pred_log <- predict(fit_log, newdata = test, "class")
+compare_log <- cbind(y_real, as.numeric(pred_log))
+colnames(compare_log) <- c("real value", "predict value")
+compare_log <- as.data.frame(compare_log)
+compare_log$`real value` <- as.numeric(compare_log$`real value`)
+compare_log$`predict value` <- as.numeric(compare_log$`predict value`)
+
+log_result1 <- 0
+for (i in 1:nrow(compare_log)){
+  if (compare_log$`real value`[i] == compare_log$`predict value`[i]){
+    log_result1 <- log_result1+1
+  }
+  else{
+    log_result1 <- log_result1
+  }
+}
+
+accRate_log1 <- log_result1/nrow(compare_log)
+accRate_log1
+```
+Confusion matrix for logit model
+```{r}
+confusionMatrix(pred_log, y_real)
+```
+
+
+
+Random Forest
+```{r}
+library(randomForest)
+fit_rf <- randomForest(sum_day~., data = train, mtry=3, importance=T)
+summary(fit_rf)
+
+pred_rf <- as.vector(predict(fit_rf, test))
+compare_rf <- cbind(y_real, pred_rf)
+compare_rf <- as.data.frame(compare_rf)
+compare_rf$y_real <- as.numeric(compare_rf$y_real)
+compare_rf$pred_rf <- as.numeric(compare_rf$pred_rf)
+
+rf_result <- 0
+for (i in 1:nrow(compare_rf)){
+  if (compare_rf$y_real[i] == compare_rf$pred_rf[i]){
+    rf_result <- rf_result+1
+  }
+  else{
+    rf_result <- rf_result
+  }
+}
+
+accRate_rf <- rf_result/nrow(compare_rf)
+accRate_rf
+
+confusionMatrix(pred_rf, y_real)
+```
+
 
 logit
 ```{r}
